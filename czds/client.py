@@ -182,13 +182,14 @@ class CZDS:
             return content
 
 
-    async def download_zone(self, url: str, output_directory: str, semaphore: asyncio.Semaphore):
+    async def download_zone(self, url: str, output_directory: str, semaphore: asyncio.Semaphore, decompress: bool = True):
         '''
         Download a single zone file
         
         :param url: URL to download
         :param output_directory: Directory to save the zone file
         :param semaphore: Optional semaphore for controlling concurrency
+        :param decompress: Whether to decompress the downloaded .gz file
         '''
         
         async def _download():
@@ -271,9 +272,10 @@ class CZDS:
                         
                         logging.info(f'Successfully downloaded {tld_name} zone file ({humanize_bytes(total_size)})')
 
-                        await gzip_decompress(filepath)
-                        filepath = filepath[:-3]
-                        logging.info(f'Decompressed {tld_name} zone file')
+                        if decompress:
+                            await gzip_decompress(filepath)
+                            filepath = filepath[:-3]
+                            logging.info(f'Decompressed {tld_name} zone file')
 
                         return filepath
 
@@ -290,12 +292,13 @@ class CZDS:
             return await _download()
 
 
-    async def download_zones(self, output_directory: str, concurrency: int):
+    async def download_zones(self, output_directory: str, concurrency: int, decompress: bool = True):
         '''
         Download multiple zone files concurrently
         
         :param output_directory: Directory to save the zone files
         :param concurrency: Number of concurrent downloads
+        :param decompress: Whether to decompress downloaded .gz files
         '''
         
         # Create the output directory if it doesn't exist
@@ -311,7 +314,7 @@ class CZDS:
         logging.info(f'Downloading {len(zone_links):,} zone files...')
 
         # Create a list of tasks to download the zone files
-        tasks = [self.download_zone(url, output_directory, semaphore) for url in zone_links]
+        tasks = [self.download_zone(url, output_directory, semaphore, decompress=decompress) for url in zone_links]
 
         # Run the tasks concurrently
         await asyncio.gather(*tasks)
