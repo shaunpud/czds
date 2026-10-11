@@ -26,6 +26,7 @@ async def main():
     zone_group = parser.add_argument_group('Zone download options')
     zone_group.add_argument('-z', '--zones', action='store_true', help='Download zone files')
     zone_group.add_argument('-c', '--concurrency', type=int, default=3, help='Number of concurrent downloads')
+    zone_group.add_argument('--no-decompress', dest='decompress', action='store_false', default=False, help='Do not decompress downloaded zone files (keep .gz)')
 
     # Report options
     report_group = parser.add_argument_group('Report options')
@@ -72,7 +73,7 @@ async def main():
             logging.info('Downloading zone files...')
             try:
                 # Download the zone files
-                await client.download_zones(output_directory, args.concurrency)
+                await client.download_zones(output_directory, args.concurrency, decompress=args.decompress)
             except Exception as e:
                 raise Exception(f'Failed to download zone files: {e}')
 
